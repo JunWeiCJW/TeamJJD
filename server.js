@@ -19,7 +19,7 @@ app.use(bodyparser.json())
 
 // Create database
 var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://localhost:8000/db";
+var url = "mongodb://mongo:27017/";
 
 MongoClient.connect(url, function(err, db) {
   if (err) throw err;
@@ -48,18 +48,20 @@ app.post('/reg-form', (req, res) => {
   const username = req.body.username
   const pwd = req.body.password
 
-  const user_d = {"username": username, "password": pwd}
-
   bcrypt.hash(pwd, saltRounds, function(err, hash) {
+    const user_d = {"username": username, "password": hash}
     MongoClient.connect(url, function(err, db) {
       if (err) throw err;
       var db_object = db.db("DB");
+      console.log(db_object)
       db_object.collection("user_data").insertOne(user_d, function(err, res) {
         if (err) throw err;
+        console.log("insert")
         db.close();
       })
     })
   })
+  res.redirect("/");
 })
 
 app.post('/login-form', (req, res) => {
