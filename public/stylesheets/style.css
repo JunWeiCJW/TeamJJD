@@ -1,0 +1,10 @@
+.login-btn {
+  font-size: 300px;
+  border-radius: 8px;
+}
+
+.redirect-login {
+  background-color: blue; /* Green */
+  border: none;
+  font-size: 16px;
+}
