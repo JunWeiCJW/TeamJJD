@@ -53,10 +53,8 @@ app.post('/reg-form', (req, res) => {
     MongoClient.connect(url, function(err, db) {
       if (err) throw err;
       var db_object = db.db("DB");
-      console.log(db_object)
       db_object.collection("user_data").insertOne(user_d, function(err, res) {
         if (err) throw err;
-        console.log("insert")
         db.close();
       })
     })
@@ -67,6 +65,23 @@ app.post('/reg-form', (req, res) => {
 app.post('/login-form', (req, res) => {
   const username = req.body.username
   const pwd = req.body.password
+
+  MongoClient.connect(url, function(err, db) {
+    if (err) throw err;
+    var db_object = db.db("DB");
+    db_object.collection("user_data").findOne({"username": username}, function(err, data) {
+      if (err) throw err;
+      console.log(data)
+      const user_match = bcrypt.compare(pwd, data["password"])
+      if (user_match) {
+        console.log("Password correct");
+        res.send("pass")
+      } else {
+        console.log("Password incorrect");
+        res.send("fail")
+      }
+    })
+  })
 })
 
 
