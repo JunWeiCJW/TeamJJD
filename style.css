@@ -1,9 +1,20 @@
 
 body {
-    background-color: blue;
+    background-color: rgb(71, 71, 240);
     color: white;
 }
 
 .my_image {
     width: 120px;
+}
+
+.centerForm {
+    text-align: center;
+    margin: auto;
+    width: 40%;
+    height: auto;
+    min-height: 120px;
+    border-color: #818fa6;
+    background-color: #9fb0cc;
+    overflow: auto;
 }

@@ -67,7 +67,7 @@ module.exports = {
         payloadBuf = Buffer.concat([payloadBuf, bytesBuf]);
         bytesRead += bytesBuf.length;
     }
-
+    
     console.log("Done parsing websocket frame! Starting to send...")
 
     var payloadStr = payloadBuf.toString();

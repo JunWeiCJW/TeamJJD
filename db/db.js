@@ -1,12 +1,18 @@
 var mysql = require('@vlasky/mysql');
-const { promisify } = require('util')
 
 var con = mysql.createConnection({
-    //host: "localhost",
-    host:"mysql",
-    port: "3306",
+    //--DOCKER COMPOSE CONFIG--
+    // host:"mysql",
+    // port: "3306",
+    // user: "root",
+    // password: "codingisfun"
+    //--DOCKER COMPOSE CONFIG--
+
+    //--Local Host Config--
+    host: "localhost",
     user: "root",
     password: "codingisfun"
+    //--Local Host Config--
 });
 
 con.connect(function (err) {

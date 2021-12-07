@@ -22,7 +22,6 @@ var server = net.createServer(conn => {
             data = globData.bufferData;//Set the data to the one thats been buffering
             resetBuffer();//Reset global variables
         }
-
         //Is it a websocket user?
         if(globData.clients.includes(conn)){
             console.log("Websocket user detected!");

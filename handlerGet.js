@@ -17,15 +17,19 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
 
     if(routeString.includes("image/")) route = '/image';
     else if(routeString.includes("images?")) route = '/images';
+    else if(routeString.includes(".js")) route = 'javascriptFile';
+    else if(routeString.includes(".css")) route = 'cssFile';
     else{
         route = routeString;
     }
 
     console.log("Request received! Route = " + routeString);
     switch (route) {
-        case '/functions.js':
-            var fileStream = fs.readFileSync('functions.js', "utf8");
-
+        case 'javascriptFile':
+            var fileStream;
+            try{
+                filestream = fs.readFileSync(routeString.slice(1, routeString.length), "utf8");//Slice away the first forward slash
+            }catch{return responses.sendErr("Requested CSS file not available")}
             var respDict = {};
             respDict["Header"] = codes[200];
             respDict["Content-Length: "] = fileStream.length;
@@ -34,9 +38,11 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
 
             respDict["data"] = fileStream.toString();
             return respond(respDict);
-            
-        case '/style.css':
-            var fileStream = fs.readFileSync('style.css', "utf8");
+        case 'cssFile':
+            var fileStream;
+            try{
+                fileStream = fs.readFileSync(routeString.slice(1, routeString.length), "utf8");//Slice away the first forward slash
+            }catch{return responses.sendErr("Requested CSS file not available")}
 
             var respDict = {};
             respDict["Header"] = codes[200];
@@ -46,7 +52,6 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
 
             respDict["data"] = fileStream.toString();
             return respond(respDict);
-        
         case '/image':
             // //Is it malicious?
             if(routeString.split("image").slice(1).includes('/') || routeString.split("image").slice(1).includes('~')){
@@ -267,6 +272,7 @@ function getCookieVal(cookie){
 }
 
 //Loads the homepage with additional stuff if necessary
+//Used to send the error messages for the login and register pages
 function loadHome(msgDict, dataDict){
     var xsrfToken = randomStr.generate();
     globData.xsrfToken = xsrfToken;
@@ -302,8 +308,7 @@ function loadHome(msgDict, dataDict){
 
     var visitDict = {visitCount: visitNum};
 
-    var templateDict = Object.assign({}, globData, visitDict);
-
+    var templateDict = Object.assign({}, globData, visitDict);//Concatenate the dictionaries
     var templateDict1 = Object.assign({}, templateDict, msgDict);
 
     var fileStream = fs.readFileSync('index.html', "utf8");
