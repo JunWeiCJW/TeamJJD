@@ -23,26 +23,6 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
 
     console.log("Request received! Route = " + routeString);
     switch (route) {
-        case '/hello':
-            //HEADERS
-            var respDict = {};
-            respDict["Header"] = codes[200];
-            respDict["Content-Length: "] = "5";
-            respDict["Content-Type: "] = "text/plain";
-            respDict["X-Content-Type-Options: "] = "nosniff";
-            //DATA
-            respDict["data"] = "Hello";
-            return respond(respDict);
-
-        case '/hi':
-            //HEADERS
-            var respDict = {};
-            respDict["Header"] = codes[301];
-            respDict["Content-Length: "] = "0";
-            respDict["Location: "] = "/hello";
-            console.log("Redirecting...");
-            return respond(respDict);
-
         case '/functions.js':
             var fileStream = fs.readFileSync('functions.js', "utf8");
 
@@ -106,16 +86,6 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
                 console.log("No cookie stored yet");
             }
             return responses.needLogin();
-        case '/utf.txt':
-            var fileStream = fs.readFileSync('utf.txt', 'utf8');
-            var respDict = {};
-            respDict["Header"] = codes[200];
-            respDict["Content-Length: "] = Buffer.byteLength(fileStream, "utf8");
-            respDict["Content-Type: "] = "text/plain; charset=UTF-8";
-            respDict["X-Content-Type-Options: "] = "nosniff";
-            respDict["data"] = fileStream;
-
-            return respond(respDict);
         case '/':
             if("Cookie" in dataDict){
                 var cookieDict = parseCookie(dataDict["Cookie"]);
