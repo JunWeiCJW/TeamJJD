@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  mysql:
+    image: mysql:8
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: 'codingisfun'
+      MYSQL_DATABASE: 'cse312'
+  app:
+    build: .
+    environment: 
+      WAIT_HOSTS: mysql:3306
+      DB_USERNAME: 'root'
+      DB_PASSWORD: 'codingisfun'
+    ports:
+      - "8080:8000"

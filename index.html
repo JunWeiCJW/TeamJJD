@@ -1,0 +1,71 @@
+<html>
+<head>
+    <title>CSE312 Sample Front End</title>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+
+<h1>CSE312 Sample Page</h1>
+
+{{#if auth}}
+<h2>{{auth}}</h2>
+{{/if}}
+
+{{#if visitCount}}
+<h1>You were here {{visitCount}} times</h1>
+{{/if}}
+
+<h2>Register:</h2>
+<form action="/register" method="post" >
+   <label for="user">Username:</label>
+   <input id="user" type="text" name="username">
+   <br/>
+   <label for="pw">Password:</label>
+   <input id="pw" type="password" name="password">
+   <p>Password must be atleast 8 characters, 1 lowercase, 1 uppercase, 1 number, 1 special character, and the only uppercase letter is not the first character</p>
+   <input type="submit" value="Submit">
+</form>
+
+{{#if register}}
+   <h5> {{register}}</h5>
+{{/if}}
+
+<h2>Login:</h2>
+<form action="/login" method="post" >
+   <label for="user">Username:</label>
+   <input id="user" type="text" name="username">
+   <br/>
+   <label for="pw">Password:</label>
+   <input id="pw" type="password" name="password">
+   <input type="submit" value="Submit">
+</form>
+
+{{#if login}}
+   <h5> {{login}}</h5>
+{{/if}}
+
+
+ <form action="/image-upload" id="image-form" method="post" enctype="multipart/form-data" novalidate>
+    <input value={{{xsrfToken}}} name="xsrf_token" hidden>
+    <label for="form-file">Image: </label>
+    <input id="form-file" type="file" name="upload">
+    <br/>
+    <label for="image-form-name">Caption: </label>
+    <input id="image-form-name" type="text" name="caption">
+    <input type="submit" value="Submit">
+ </form>
+
+ {{#if images}}
+    {{#each images}}
+    <img src={{this/img}}></img>
+    <h3>{{this/caption}}</h3>
+    {{/each}}
+ {{/if}}
+
+ <script>
+   
+
+ </script>
+
+</body>
+</html>
