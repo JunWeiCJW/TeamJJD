@@ -27,7 +27,7 @@ var server = net.createServer(conn => {
         if(allClients.includes(conn)){
             console.log("Websocket user detected!");
             console.log("Parsing websocket frame!");
-            var webSocMsg = webSocketHandler.mainHandler(data, conn);
+            const webSocMsg = await webSocketHandler.mainHandler(data, conn);
             if(webSocMsg != -1){allClients.forEach(clientSocket => clientSocket.write(webSocMsg));}
         }
         //Is it still buffering?

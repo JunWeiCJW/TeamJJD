@@ -20,7 +20,7 @@ module.exports = {
     mainHandler,
     buildResponse
 }
-    function mainHandler(data, client){
+    async function mainHandler(data, client){
     var offSet = 0;//To track amount of bytes read until payload
 
     //IGNORE FIN and stuff(first 4 bits)
@@ -74,14 +74,18 @@ module.exports = {
 
     var payloadStr = payloadBuf.toString();
     var dataObj = sec.escapeHtml(payloadStr);
-    //globData.comments.push(dataObj); // Dont need this anymore
+    var dataDict = JSON.parse(dataObj);
 
-    db.addToChat(dataObj);
-    //Append message to database
+    const likeCount = await iterateGetLikes(dataDict);
+    dataDict.likes = likeCount;
 
-    //Build response
+    var dataobj1 = JSON.stringify(dataDict);
 
-    return buildResponse(dataObj);
+    if(likeCount != 0){//Should never be 0 like if there is like data
+        return buildResponse(dataobj1);
+    }else{
+        return buildResponse(dataObj);//build without data
+    }
 }
 
 
@@ -113,4 +117,20 @@ function getKeyFromDict(clientSock){
             return key;
         }
     }
+}
+
+async function iterateGetLikes(dataDict){
+//get like from db
+//Iterate store into db
+//send like over websocket
+
+var id = Number(dataDict['chatID']);
+const likeDict = await db.getLikesByID(id);
+if(likeDict.length != 0){
+    var likeCount = likeDict[0].likes + 1;
+    db.updateLikesByID(id, likeCount);
+    return likeCount;
+}
+return 0;
+
 }

@@ -54,7 +54,7 @@ function addToChat(username, msg) {
 
 function getAllChatMsg() {
     return new Promise((resolve, reject) => {
-        con.query("SELECT username,comment,likes FROM chatfeed ORDER BY id ASC", (err, result) => {
+        con.query("SELECT username,comment,likes, id FROM chatfeed ORDER BY id ASC", (err, result) => {
             if (err) {
                 reject(err);
             }
@@ -187,6 +187,28 @@ function updateProfilePicDB(imgPath, username){
 }
 //-------USER QUERY--------- 
 
+//-------LIKES----------
+
+function getLikesByID(id){
+    return new Promise((resolve, reject) => {
+        var queryString = `SELECT likes FROM chatfeed WHERE id='${id}'`;
+        con.query(queryString, (err, result) => {
+            if(err) reject(err);
+            else resolve(result);
+        })
+    }).catch(error => { 
+        console.log(`No User found. Username: ${username}`);
+        return [];
+    });
+}
+
+function updateLikesByID(id, likeCount){
+    con.query(`UPDATE chatfeed SET likes='${likeCount}' WHERE id='${id}'`, function (err, result) {
+        if (err) {console.log(`Failed to update like! Error: ${err}`);
+        }else {console.log("Like updated!");}
+    })
+}
+
 module.exports = {
     con,
     addToChat,
@@ -196,5 +218,7 @@ module.exports = {
     updateCookie,
     fetchUsers,
     getUserByCookie,
-    updateUserProfilePic
+    updateUserProfilePic,
+    getLikesByID,
+    updateLikesByID
 }

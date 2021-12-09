@@ -40,15 +40,15 @@
             {{/each}}
     </div>
 
+    <!-- FEED GENERATION -->
     <div class="column right">
         <h3> Feed </h3>
         {{#each chatFeed}}
         <div class="div1" style="background-color:black;color:white;padding:20px;">
             <p> {{this/username}} </p>
             <p> {{this/comment}} </p>
-            <p> Likes: {{this/likes}} </p>
-            <button onclick="sendMessage()">Like</button>
-            <!--TODO: implement backend for button-->
+            <p id="{{this/id}}"> Likes: {{this/likes}} </p>
+            <button value="{{this/id}}" onclick="sendLike(this)">Like</button>
         </div>
         <br>
         {{/each}}
@@ -59,19 +59,29 @@
         </form>
     </div>
 
-
-
     <script>
         // Establish a WebSocket connection with the server
         const socket = new WebSocket('ws://' + window.location.host + '/websocket');
-
+    
         // Call the addMessage function whenever data is received from the server over the WebSocket
         socket.onmessage = parseMessage;
-
+    
         function parseMessage(message) {
             console.log(message);
+            var dict = JSON.parse(message.data);
+            if("chatID" in dict){
+                var chatId = dict["chatID"];
+                var likecount = dict.likes;
+                document.getElementById(chatId).innerHTML  = `Likes: ${likecount}`;
+            }
         }
-
+    
+        function sendLike(chat){
+            console.log("In sendLike function");
+            console.log(chat);
+            socket.send(JSON.stringify({'chatID':chat.value}));
+        }
+    
     </script>
 
 </body>

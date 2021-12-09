@@ -292,6 +292,7 @@ async function getChatFeed(){
         chatDict.username = user.username;
         chatDict.comment = user.comment;
         chatDict.likes = user.likes;
+        chatDict.id = user.id;
         chatDicts.push(chatDict);
     }
     return chatDicts;
