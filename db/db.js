@@ -142,6 +142,49 @@ async function getUserByCookie(cookie) {
     }
     return [];
 }
+
+async function updateUserProfilePic(imgPath, cookie) {
+    const userRows = await fetchUsers();
+    if(userRows.length != 0){
+        for(let i = 0; i < userRows.length; i++){
+            var rowDict = userRows[i];
+            if(rowDict.token != null){
+                if(bcrypt.compareSync(cookie, rowDict.token)){
+                    const successBool = await updateProfilePicDB(imgPath, rowDict.username);
+                    if(successBool){
+                        console.log(`Success updating user profile picture. Pic: ${imgPath}, User: ${rowDict.username} `)
+                        return true;
+                    }else {
+                        console.log(`Error updating user profile picture! Pic: ${imgPath}, User: ${rowDict.username} `)
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    console.log("Error updating profile pic");
+    return false;
+}
+
+function updateProfilePicDB(imgPath, username){
+    return new Promise((resolve, reject) => {
+        var queryString = `UPDATE users SET imagefile = '${imgPath}' WHERE username = '${username}'`;
+        con.query(queryString, (err, result) => {
+            if(err){
+                reject(err);
+                console.log(err);
+                return false;
+            }
+            else{
+                resolve(result);
+                return true;
+            }
+        })
+    }).catch(error => { 
+        console.log(`Error updating profile. User: ${username}, Image Path: ${imgPath}`);
+        return false;
+    });
+}
 //-------USER QUERY--------- 
 
 module.exports = {
@@ -152,5 +195,6 @@ module.exports = {
     registerUser,
     updateCookie,
     fetchUsers,
-    getUserByCookie
+    getUserByCookie,
+    updateUserProfilePic
 }

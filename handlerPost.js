@@ -39,13 +39,20 @@ module.exports = async function mainHandler(request, route) {
             var img = data["filename"];
             //Save image
             var imgRawData = data["upload"];
-            fs.writeFileSync(`image/${img}`, imgRawData);
-            var caption = data["caption"];
-            var dict = {};
-            dict.img = `image/${img}`;//Store the route
-            dict.caption = caption;
-            globData.images.push(dict);
-            return responses.sendRedirect('./');
+            var path = `image/${img}`;
+            if(fs.existsSync(path)){
+                path = path.slice(0, path.length - 4);//Gets rid of .jpg
+                path += randomStr.generate() + ".jpg";
+            }
+            fs.writeFileSync(path, imgRawData);
+            
+            const success = await db.updateUserProfilePic(path, cookieKey);
+            if(success){
+                return responses.sendRedirect('/homepage');
+            }else{
+                //DO SOMETHING HERE
+                return responses.sendRedirect('/homepage');
+            }
         case "/register":
             var regData = getAsciiData(request);
             var regDict = parseUserForm(regData);
@@ -266,8 +273,4 @@ function parseCookie(cookie) {
         cookieDict[key] = val;
     }
     return cookieDict;
-}
-
-async function authUser(username, cookieKey){
-
 }
