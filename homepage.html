@@ -13,11 +13,11 @@
 <body>
     <h1 class="titles">TeamJJDDP Forum</h1>
 
-    <h2 class="titles" id="curUser" value={{clientUsername}}>Welcome {{clientUsername}}!</h2>
+    <h2 class="titles" >Welcome {{clientUsername}}!</h2>
 
     <div class="column left">
         <div>
-            <p>{{clientUsername}}:</p>
+            <p id="curUser">{{clientUsername}}:</p>
             <img src={{clientProfilePic}} class="profile_image"></img>
             <form action="/image-upload" id="image-form" method="post" enctype="multipart/form-data">
                 <h3>Change profile Picture:</h3>
@@ -28,16 +28,27 @@
     
         </div>
 
-        <h4>Users currently logged in:</h3>
+        <h3>Users currently logged in:</h3>
+        <div id="alertButton" style="display:hidden">
+
+        </div>
             {{#each onlineUsers}}
             <div>
                 <img src="{{this/imagefile}}" class="profile_image" />
                 {{username}}
-                <button onclick="sendLike()">DM</button>
-                <!--TODO: implement backend for button-->
+                <button value="{{username}}" onclick="openDMchat(this.value)">DM</button>
             </div>
-            <h3>{{this/caption}}</h3>
             {{/each}}
+
+        <div id="dmSendMessage" style="display:hidden">
+
+        </div>
+
+        <div id="showDMmsgDiv" style="display:hidden">
+            
+        </div>
+
+
     </div>
 
     <!-- FEED GENERATION -->
@@ -74,6 +85,30 @@
                 var likecount = dict.likes;
                 document.getElementById(chatId).innerHTML  = `Likes: ${likecount}`;
             }
+            if("sender" in dict){
+                var sender = dict["sender"];
+                var msg = dict["message"];
+                var alertButton = document.getElementById("alertButton");
+                localStorage.setItem("sender", sender);
+                localStorage.setItem("msg", msg);
+                alertButton.innerHTML = "<button style='color:red' onclick='showDMmsg()'>You have a DM!</button>";
+                console.log(`Got data back in dm! User: ${sender}, Msg: ${msg}`);
+            }
+        }
+
+        function showDMmsg(){
+            var alertButton = document.getElementById("alertButton");
+            alertButton.innerHTML = "";
+            console.log("Showing dm msg!");
+            var sender = localStorage.getItem("sender");
+            var msg = localStorage.getItem("msg");
+            var showDmMsgDiv = document.getElementById("showDMmsgDiv");
+            showDmMsgDiv.innerHTML=`<p>Sender: ${sender} <br> ${msg}</p> <button onclick="closeDmMsg()">Close</button>`;
+        }
+
+        function closeDmMsg(){
+            var showDmMsgDiv = document.getElementById("showDMmsgDiv");
+            showDmMsgDiv.innerHTML = "";
         }
     
         function sendLike(chat){
@@ -81,6 +116,32 @@
             console.log(chat);
             socket.send(JSON.stringify({'chatID':chat.value}));
         }
+
+        function openDMchat(userToSend){
+            var chatDiv = document.getElementById("dmSendMessage");
+            chatDiv.innerHTML = "<p id='userToSend'>" + userToSend + "</p><input id='dmInput' type='text'> <br> <button onclick='sendDM()'>Send DM </button>";
+            // console.log(userToSend);
+            // console.log(chatDiv);
+            // chatDiv.style.display = "block";
+        }
+
+        function sendDM(){
+            var curUserTemp = document.getElementById("curUser").innerHTML;
+            var curUser = curUserTemp.slice(0, curUserTemp.length-1)
+            var recieverDiv = document.getElementById("userToSend");
+            var userToSend = recieverDiv.innerHTML;
+            var msg = document.getElementById("dmInput").value;
+            console.log(userToSend);
+            console.log(msg);
+            if(msg !== ""){
+                socket.send(JSON.stringify({'sender': curUser, 'reciever': userToSend, 'message':msg}));
+                var chatDiv = document.getElementById("dmSendMessage");
+                chatDiv.innerHTML = "";
+                chatDiv.style.display = "hidden";
+            }
+        }
+
+
     
     </script>
 

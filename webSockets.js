@@ -76,16 +76,12 @@ module.exports = {
     var dataObj = sec.escapeHtml(payloadStr);
     var dataDict = JSON.parse(dataObj);
 
-    const likeCount = await iterateGetLikes(dataDict);
-    dataDict.likes = likeCount;
-
-    var dataobj1 = JSON.stringify(dataDict);
-
-    if(likeCount != 0){//Should never be 0 like if there is like data
-        return buildResponse(dataobj1);
-    }else{
-        return buildResponse(dataObj);//build without data
+    if("chatID" in dataDict){
+        await handleLikeMsg(dataDict);
+    }else if("sender" in dataDict){
+        handleDM(dataDict);
     }
+
 }
 
 
@@ -133,4 +129,26 @@ if(likeDict.length != 0){
 }
 return 0;
 
+}
+
+async function handleLikeMsg(dataDict){
+    var allClients = Object.values(globData.clients);
+    const likeCount = await iterateGetLikes(dataDict);
+    var resp;
+    if(likeCount != 0){//Should never be 0 like if there is like data
+        dataDict.likes = likeCount;
+        dataObj = JSON.stringify(dataDict);
+        resp = buildResponse(dataObj);//Build without data
+        if(resp != -1){allClients.forEach(clientSocket => clientSocket.write(resp));}
+    }
+}
+
+async function handleDM(dataDict){
+    var sender = dataDict["sender"];
+    var username = dataDict["reciever"];
+
+    var clientSocketToSend = globData.clients[username];
+    dataDict.sender = sender;
+    var resp = JSON.stringify(dataDict);
+    clientSocketToSend.write(buildResponse(resp));
 }

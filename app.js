@@ -27,8 +27,7 @@ var server = net.createServer(conn => {
         if(allClients.includes(conn)){
             console.log("Websocket user detected!");
             console.log("Parsing websocket frame!");
-            const webSocMsg = await webSocketHandler.mainHandler(data, conn);
-            if(webSocMsg != -1){allClients.forEach(clientSocket => clientSocket.write(webSocMsg));}
+            await webSocketHandler.mainHandler(data, conn);
         }
         //Is it still buffering?
         else if(!globData.isBuffering){
