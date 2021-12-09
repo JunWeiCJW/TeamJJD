@@ -1,4 +1,5 @@
 var mysql = require('@vlasky/mysql');
+const bcrypt = require('bcryptjs');
 
 var con = mysql.createConnection({
     //--DOCKER COMPOSE CONFIG--
@@ -131,11 +132,11 @@ function getUser(username) {
 
 //Get user based off un-hashed cookie(each hash is different)
 async function getUserByCookie(cookie) {
-    const userRows = await db.fetchUsers();
+    const userRows = await fetchUsers();
     if(userRows.length != 0){
         for(let i = 0; i < userRows.length; i++){
             var rowDict = userRows[i];
-            if(bcrypt.compareSync(cookieKey, rowDict.token)){
+            if(bcrypt.compareSync(cookie, rowDict.token)){
                 return rowDict;
             }
         }

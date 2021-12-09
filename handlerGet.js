@@ -11,23 +11,23 @@ const bcrypt = require('bcryptjs');
 //SHA-1 encoding
 const crypto = require('crypto');
 
-module.exports = async function mainHandler(dataDict, routeString, clientSock){
+module.exports = async function mainHandler(dataDict, routeString, clientSock) {
     var route = "";
 
     //Handle special cases
-    if(routeString.includes("image/")) route = '/image';
-    else if(routeString.includes("images?")) route = '/images';
-    else if(routeString.includes(".js")) route = 'javascriptFile';
-    else if(routeString.includes(".css")) route = 'cssFile';
-    else{route = routeString;}
+    if (routeString.includes("image/")) route = '/image';
+    else if (routeString.includes("images?")) route = '/images';
+    else if (routeString.includes(".js")) route = 'javascriptFile';
+    else if (routeString.includes(".css")) route = 'cssFile';
+    else { route = routeString; }
 
     console.log("Request received! Route = " + routeString);
     switch (route) {
         case 'javascriptFile':
             var fileStream;
-            try{
+            try {
                 filestream = fs.readFileSync(routeString.slice(1, routeString.length), "utf8");//Slice away the first forward slash
-            }catch{return responses.sendErr("Requested CSS file not available")}
+            } catch { return responses.sendErr("Requested CSS file not available") }
             var respDict = {};
             respDict["Header"] = codes[200];
             respDict["Content-Length: "] = fileStream.length;
@@ -38,9 +38,9 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
             return respond(respDict);
         case 'cssFile':
             var fileStream;
-            try{
+            try {
                 fileStream = fs.readFileSync(routeString.slice(1, routeString.length), "utf8");//Slice away the first forward slash
-            }catch{return responses.sendErr("Requested CSS file not available")}
+            } catch { return responses.sendErr("Requested CSS file not available") }
 
             var respDict = {};
             respDict["Header"] = codes[200];
@@ -52,13 +52,13 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
             return respond(respDict);
         case '/image':
             // //Is it malicious?
-            if(routeString.split("image").slice(1).includes('/') || routeString.split("image").slice(1).includes('~')){
+            if (routeString.split("image").slice(1).includes('/') || routeString.split("image").slice(1).includes('~')) {
                 return responses.sendErr();
             }
             var fileStream;
-            try{
+            try {
                 fileStream = fs.readFileSync(routeString.slice(1), null);//Slice to get rid of /
-            }catch{ return responses.sendErr("Requested image is not available")};
+            } catch { return responses.sendErr("Requested image is not available") };
             //HEADERS
             var respDict = {};
             respDict["Header"] = codes[200];
@@ -69,14 +69,14 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
 
             return respond(respDict);
         case '/auth':
-            if("Cookie" in dataDict){
+            if ("Cookie" in dataDict) {
                 var cookieDict = parseCookie(dataDict["Cookie"]);
                 var cookieKey = cookieDict["id"];
                 const userRows = await db.fetchUsers();
-                if(userRows.length != 0){
-                    for(let i = 0; i < userRows.length; i++){
+                if (userRows.length != 0) {
+                    for (let i = 0; i < userRows.length; i++) {
                         var rowDict = userRows[i];
-                        if(bcrypt.compareSync(cookieKey, rowDict.token)){
+                        if (bcrypt.compareSync(cookieKey, rowDict.token)) {
                             var dbUsername = rowDict.username;
                             var authDict = {};
                             authDict.username = `${dbUsername}`;
@@ -85,29 +85,18 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
                     }
                 }
                 console.log("No authenticated cookie!")
-            }else{
+            } else {
                 console.log("No cookie stored yet");
             }
             return responses.needLogin();
         case '/':
-            if("Cookie" in dataDict){
+            if ("Cookie" in dataDict) {
                 var cookieDict = parseCookie(dataDict["Cookie"]);
                 var cookieKey = cookieDict["id"];
-                const userRows = await db.fetchUsers();
-                if(userRows.length != 0){
-                    for(let i = 0; i < userRows.length; i++){
-                        var rowDict = userRows[i];
-                        if(bcrypt.compareSync(cookieKey, rowDict.token)){
-                            var dbUsername = rowDict.username;
-                            var authDict = {};
-                            authDict.auth = `Welcome back ${dbUsername}`;
-                            return loadLogin(authDict, dataDict);
-                        }
-                    }
-                }
-                console.log("No authenticated cookie!")
-            }else{
-                console.log("No cookie stored yet");
+                const userRow = await db.getUserByCookie(cookieKey);
+                if (userRow.length != 1) {
+                    return responses.sendRedirect('/homepage');
+                }else console.log(`No cookie authenticated`);
             }
             return loadLogin({}, dataDict);
         case '/loginFail':
@@ -115,9 +104,7 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
             msgDict.login = "You failed to login, please check username and password";
             return loadLogin(msgDict, dataDict)
         case '/loginSuccess':
-            var msgDict = {};
-            msgDict.login = "Successfully logged in!";
-            return loadLogin(msgDict, dataDict)
+            return loadHomePage({}, dataDict);
         case '/registerFail':
             var msgDict = {};
             msgDict.register = "Incorrect password, please check requirements!";
@@ -142,7 +129,18 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
             sendallChat(clientSock)//NEED TO CHANGE TO SEND ALL INFO
             return respond(respDict);
         case '/homepage':
-            return loadHomePage(dataDict);
+            if ("Cookie" in dataDict) {
+                var cookieDict = parseCookie(dataDict["Cookie"]);
+                var cookieKey = cookieDict["id"];
+                const userRow = await db.getUserByCookie(cookieKey);
+                if (userRow.length != 1) {
+                    var dbUsername = userRow.username;
+                    var authDict = {};
+                    authDict.auth = `Welcome back ${dbUsername}`;
+                    return loadHomePage(authDict, dataDict);
+                }else console.log(`No cookie authenticated`);
+            }
+            return responses.sendRedirect('/');
         default:
             console.log(`Path not found! ${route}`);
             return responses.sendErr();
@@ -152,17 +150,17 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
 function respond(responseProp) {
     var responseString = "";
     // this is implicitly dependent on iteration order so it's pretty brittle
-    for(let key in responseProp){
-        if(key == "Header") responseString += responseProp[key];
-        else if(key == "data") continue;
+    for (let key in responseProp) {
+        if (key == "Header") responseString += responseProp[key];
+        else if (key == "data") continue;
         //Add cookies
-        else if(key == "cookie"){
+        else if (key == "cookie") {
             var cookieList = responseProp[key].split(":");
-            for(let i = 0; i < cookieList.length; i++){
+            for (let i = 0; i < cookieList.length; i++) {
                 var cookieValue = cookieList[i];
                 responseString += ("Set-Cookie: " + cookieValue);
                 responseString += "; Max-Age: 3600; Secure; HttpOnly ";//Set timeout val, also add delimiter, HTTPS
-                if(i+1 != cookieList.length) responseString += "\r\n";//Adds delimiter if not last elem
+                if (i + 1 != cookieList.length) responseString += "\r\n";//Adds delimiter if not last elem
             }
         }
         //Add cookies
@@ -172,20 +170,20 @@ function respond(responseProp) {
     responseString += "\r\n";//For data
     var strBuff = Buffer.from(responseString);
     //Is data present?
-    try{
+    try {
         var dataBuff = Buffer.from(responseProp["data"]);
         var fullArr = [strBuff, dataBuff];
         var fullRespBuff = Buffer.concat(fullArr);
         return fullRespBuff;
-    }catch{
+    } catch {
         console.log("Data not present in request!\n");
         return responseString;
     }
 }
 
-async function sendallChat(clientSock){
+async function sendallChat(clientSock) {
     var allChatMsg = await db.getAllChatMsg();
-    allChatMsg.forEach(row =>{
+    allChatMsg.forEach(row => {
         var dict = {};
         dict["username"] = row.username;
         dict["comment"] = row.comment;
@@ -195,10 +193,10 @@ async function sendallChat(clientSock){
     })
 }
 
-function parseCookie(cookie){
+function parseCookie(cookie) {
     var cookieDict = {};
     var cookieList = cookie.split(";");
-    for(let i = 0; i < cookieList.length; i++){
+    for (let i = 0; i < cookieList.length; i++) {
         var cookieValue = cookieList[i];
         var [key, val] = cookieValue.split("=");
         key = key.trim();
@@ -208,20 +206,9 @@ function parseCookie(cookie){
     return cookieDict;
 }
 
-function getCookieVal(cookie){
-    for(let i = 0; i < globData.cookiesVisits.length; i++){
-        var keyVal = globData.cookiesVisits[i];
-        if(keyVal.cookieId == cookie){
-            globData.cookiesVisits[i].visitCount += 1;
-            return keyVal
-        }
-    }
-    return;
-}
-
-//Loads the homepage with additional info as dictionaries to be displayed in handlebars
+//Loads the loginpage with additional info as dictionaries to be displayed in handlebars
 //Used to send the error messages for the login and register pages
-function loadLogin(msgDict, dataDict){
+function loadLogin(msgDict, dataDict) {
     var xsrfToken = randomStr.generate();
     globData.xsrfToken = xsrfToken;
 
@@ -232,8 +219,9 @@ function loadLogin(msgDict, dataDict){
 
     //Handle cookies here
     if("Cookie" in dataDict){
-
     }else{
+        var cookieVal = randomStr.generate();
+        respDict["cookie"] = `id=${cookieVal}`;
     }
 
     var templateDict1 = Object.assign({}, globData, msgDict);
@@ -249,7 +237,7 @@ function loadLogin(msgDict, dataDict){
     return respond(respDict);
 }
 
-function loadAuth(valDict){
+function loadAuth(valDict) {
     var respDict = {};
     respDict["Header"] = codes[200];
     respDict["Content-Type: "] = "text/html";
@@ -266,6 +254,30 @@ function loadAuth(valDict){
     return respond(respDict);
 }
 
-function loadHomePage(msgDict, dataDict){
+function loadHomePage(msgDict, dataDict) {
+    var xsrfToken = randomStr.generate();
+    globData.xsrfToken = xsrfToken;
 
+    var respDict = {};
+    respDict["Header"] = codes[200];
+    respDict["Content-Type: "] = "text/html";
+    respDict["X-Content-Type-Options: "] = "nosniff";
+
+    //Handle cookies here
+    if ("Cookie" in dataDict) {
+
+    } else {
+    }
+
+    var templateDict1 = Object.assign({}, globData, msgDict);
+
+    var fileStream = fs.readFileSync('homepage.html', "utf8");
+    const templateHTML1 = fileStream.toString();
+    const templateFun1 = HandleBars.compile(templateHTML1);
+    var data = templateFun1(templateDict1);
+
+    respDict["Content-Length: "] = data.length;
+    respDict["data"] = data;
+
+    return respond(respDict);
 }

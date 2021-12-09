@@ -81,8 +81,6 @@ module.exports = async function mainHandler(request, route) {
     return null;
 }
 
-
-
 function parseUserForm(dataString) {
     var dataList = dataString.split("&");
     var returnDict = {};
@@ -217,7 +215,7 @@ async function verifyUser(username, password, cookieKey) {
         //conn.write(responses.sendRedirect("./loginFail"));
         console.log("No users found! Login failed")
         updateCookieLogin(cookieKey, "Login unSuccessful!");
-        return;
+        return false;
     }
     var dbPassword = user[0].password;
     return bcrypt.compareSync(password, dbPassword)
