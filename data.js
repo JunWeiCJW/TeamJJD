@@ -7,5 +7,4 @@ module.exports = {
     isBuffering: false,
     headerLength: 0,
     clients: [],
-    cookiesVisits: []//List of dicts with ID to the number of
 }

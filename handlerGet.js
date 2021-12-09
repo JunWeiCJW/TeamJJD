@@ -10,18 +10,16 @@ const bcrypt = require('bcryptjs');
 
 //SHA-1 encoding
 const crypto = require('crypto');
-const { cookiesVisits } = require('./data.js');
 
 module.exports = async function mainHandler(dataDict, routeString, clientSock){
     var route = "";
 
+    //Handle special cases
     if(routeString.includes("image/")) route = '/image';
     else if(routeString.includes("images?")) route = '/images';
     else if(routeString.includes(".js")) route = 'javascriptFile';
     else if(routeString.includes(".css")) route = 'cssFile';
-    else{
-        route = routeString;
-    }
+    else{route = routeString;}
 
     console.log("Request received! Route = " + routeString);
     switch (route) {
@@ -103,7 +101,7 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
                             var dbUsername = rowDict.username;
                             var authDict = {};
                             authDict.auth = `Welcome back ${dbUsername}`;
-                            return loadHome(authDict, dataDict);
+                            return loadLogin(authDict, dataDict);
                         }
                     }
                 }
@@ -111,43 +109,23 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
             }else{
                 console.log("No cookie stored yet");
             }
-            return loadHome({}, dataDict);
+            return loadLogin({}, dataDict);
         case '/loginFail':
             var msgDict = {};
             msgDict.login = "You failed to login, please check username and password";
-            return loadHome(msgDict, dataDict)
-
+            return loadLogin(msgDict, dataDict)
         case '/loginSuccess':
             var msgDict = {};
             msgDict.login = "Successfully logged in!";
-            return loadHome(msgDict, dataDict)
-        
+            return loadLogin(msgDict, dataDict)
         case '/registerFail':
             var msgDict = {};
             msgDict.register = "Incorrect password, please check requirements!";
-            return loadHome(msgDict, dataDict)
-            
-        case '/images':
-            var fileStream = fs.readFileSync('images.html', "utf8");
-            var respDict = {};
-            //DATA
-            const templateHTML = fileStream.toString();
-            const templateFun = HandleBars.compile(templateHTML);
-            var queryDict = parseQueryStr(routeString);
-            if(queryDict == -1){
-                console.log("Error parsing the query string!");
-                return responses.sendErr("Error parsing the requested query");
-            }
-            var data = templateFun(queryDict);
-            console.log(data);
-            respDict["data"] = data;
-
-            respDict["Header"] = codes[200];
-            respDict["Content-Length: "] = data.length;
-            respDict["Content-Type: "] = "text/html";
-            respDict["X-Content-Type-Options: "] = "nosniff";
-
-            return respond(respDict);
+            return loadLogin(msgDict, dataDict)
+        case './regSameUser':
+            var msgDict = {};
+            msgDict.register = "Username exists! Please login, or choose a different username";
+            return loadLogin(msgDict, dataDict)
         case '/websocket':
             var respDict = {};
             respDict["Header"] = codes[101];
@@ -159,11 +137,12 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock){
             var hashedKey = shasum.update(webKey).digest('base64');
 
             globData.clients.push(dataDict["client"]);//Save client upgrade
-
             respDict["Sec-WebSocket-Accept: "] = hashedKey;
 
-            sendallChat(clientSock)
+            sendallChat(clientSock)//NEED TO CHANGE TO SEND ALL INFO
             return respond(respDict);
+        case '/homepage':
+            return loadHomePage(dataDict);
         default:
             console.log(`Path not found! ${route}`);
             return responses.sendErr();
@@ -204,37 +183,6 @@ function respond(responseProp) {
     }
 }
 
-//Parses the routestring for queries
-function parseQueryStr(routeString) {
-    var queryData = {};
-    var indexQueryStart = routeString.indexOf('?');
-    if(indexQueryStart != -1 && indexQueryStart != routeString.length){//If there is no query delimiter, AKA ?
-        var newStr = routeString.slice(indexQueryStart + 1);//newStr is the query string after the ?
-        var queries = newStr.split('&');//List of queries, with keyval pair
-        try {
-            queries.forEach(function(query){
-                var keyVal = query.split('=');
-                //If a query has more than one key val, format is broken
-                //If a query key has format of items, format is broken
-                if(keyVal.length != 2 || keyVal[0].includes('+')) {
-                    queryData = -1;
-                }else{
-                    var keyName = keyVal[0];
-                    var keyValues = [];
-                    if(keyName == "images"){
-                        keyValues = ((keyVal[1].split('+')).filter(imgName => imgName != '').map(imgName => `\"image/${imgName}.jpg\"`));
-                    }else{keyValues = keyVal[1].replace(/%20/g, " ").split('+')};
-                    queryData[keyName] = keyValues;
-                }
-            });
-        } catch{ return -1;}
-        console.log(queryData);
-        return queryData;
-    }else{
-        return -1;
-    }
-}
-
 async function sendallChat(clientSock){
     var allChatMsg = await db.getAllChatMsg();
     allChatMsg.forEach(row =>{
@@ -271,9 +219,9 @@ function getCookieVal(cookie){
     return;
 }
 
-//Loads the homepage with additional stuff if necessary
+//Loads the homepage with additional info as dictionaries to be displayed in handlebars
 //Used to send the error messages for the login and register pages
-function loadHome(msgDict, dataDict){
+function loadLogin(msgDict, dataDict){
     var xsrfToken = randomStr.generate();
     globData.xsrfToken = xsrfToken;
 
@@ -282,34 +230,13 @@ function loadHome(msgDict, dataDict){
     respDict["Content-Type: "] = "text/html";
     respDict["X-Content-Type-Options: "] = "nosniff";
 
-    //COOKIE STUFF(ITERATE VISITS)
-    var cookieKeyVal = {};
-
-    var visitNum = 1;
+    //Handle cookies here
     if("Cookie" in dataDict){
-        var cookieDict = parseCookie(dataDict["Cookie"]);
-        var cookieKey = cookieDict["id"];
-        var cookieGlobData = getCookieVal(cookieKey);
-        cookieKeyVal = cookieGlobData;
-        if(cookieGlobData){
-            visitNum = cookieGlobData.visitCount;
-            respDict["cookie"] = `visits=${visitNum}`;
-        }
+
     }else{
-        var cookieVal = randomStr.generate();
-        respDict["cookie"] = `id=${cookieVal}:visits=${visitNum}`;
-        var tDict = {};
-        tDict.cookieId = cookieVal;
-        tDict.visitCount = visitNum;
-        tDict.login = "";
-        globData.cookiesVisits.push(tDict);
     }
-    //COOKIE STUFF
 
-    var visitDict = {visitCount: visitNum};
-
-    var templateDict = Object.assign({}, globData, visitDict);//Concatenate the dictionaries
-    var templateDict1 = Object.assign({}, templateDict, msgDict);
+    var templateDict1 = Object.assign({}, globData, msgDict);
 
     var fileStream = fs.readFileSync('index.html', "utf8");
     const templateHTML1 = fileStream.toString();
@@ -337,4 +264,8 @@ function loadAuth(valDict){
     respDict["data"] = data;
 
     return respond(respDict);
+}
+
+function loadHomePage(msgDict, dataDict){
+
 }

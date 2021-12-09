@@ -49,8 +49,12 @@ module.exports = async function mainHandler(request, route) {
             var username = regDict['username'];
             var password = regDict['password'];
             if(verifyPassword(password)){
-                regUser(username, password, cookieKey);
-                return responses.sendRedirect('./');
+                const registerStatus = await regUser(username, password, cookieKey);
+                if(registerStatus){
+                    return responses.sendRedirect('./');
+                }else{
+                    return responses.sendRedirect('./regSameUser');
+                }
             }else{
                 console.log("Register failed");
                 return responses.sendRedirect('/registerFail');
@@ -194,25 +198,15 @@ function getAsciiData(dataBuf) {
     return dataString;
 }
 
-async function hashPw(password) {
-    const salt = await bcrypt.genSalt(10);
-    const hashedReturnVal = await new Promise((resolve, reject) => {
-        bcrypt.hash(password, salt, function (err, result) {
-            if (err) reject(result);
-            resolve(result);
-        });
-    })
-    return hashedReturnVal;
-}
-
 async function regUser(username, password) {
-    const hashedPassword = await hashPw(password);
+    const hashedPassword = bcrypt.hashSync(password, 10);
     const userRows = await db.getUser(username);
     if (userRows.length != 0) {
         console.log("User already exists!");
-        //Do something here
+        return false;
     } else {
         db.registerUser(username, hashedPassword);
+        return true;
     }
 }
 
