@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -7,71 +8,71 @@
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="style.css"/>
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="style.css" />
     <title>TeamJJDDP!</title>
 </head>
 
 <body>
-<h1>TeamJJDDP Forum</h1>
+    <h1 class="titles">TeamJJDDP Forum</h1>
 
-<h2>Welcome {{clientUsername}}!</h2>
-
-<form action="https://google.com"> <!--TODO: Profile Picture Submission page URL-->
-    <input type="submit" value="Change Profile Picture" />
-</form>
-
-<div class="container-fluid">
-    <div class = "row">
-        <div class="col-sm-4">Users currently Logged In:
-            <br>
-            <div>
-                <img src="image/rabbit.jpg"  class="profile_image" />
-                {{username}}
-                <button onclick="sendLike()">DM</button> <!--TODO: implement backend for button-->
-            </div>
-        </div>
-
-        <div class="col-sm-8"> Rabbits Thread
-            <!-- Forum Posting Box: Contains username, comment, like button, like count-->
-            <div class="div1" style="background-color:black;color:white;padding:20px;">
-                <p> {{username}} </p>
-                <p> {{Comment}} </p>
-                <p> Likes: {{Likes}} </p>
-                <button onclick="sendMessage()">Like</button> <!--TODO: implement backend for button-->
-            </div>
-            <br>
-
-            <!-- Form Submission-->
-            [Post a reply]:
-            <form action="/comment" id="comment-form" method="post" enctype="multipart/form-data">
-                <label for="text-form-name">Name: </label>
-                <input id="text-form-name" type="text" name="name"><br/>
-                <label for="form-comment">Comment: </label>
-                <input id="form-comment" type="text" name="comment">
-                <input type="submit" value="Submit">
-            </form>
-
-        </div>
-
+    <h2 class="titles" id="curUser" value={{clientUsername}}>Welcome {{clientUsername}}!</h2>
+    <div>
+        <p>{{clientUsername}}:</p>
+        <img src={{clientProfilePic}} class="profile_image"></img>
+        <form action="https://google.com">
+            <!--TODO: Profile Picture Submission page URL-->
+            <input type="submit" value="Change Profile Picture" />
+        </form>
     </div>
 
+    <!-- Side navigation -->
+    <div class="column left">
+        <h4>Users currently logged in:</h3>
+        {{#each onlineUsers}}
+        <div>
+            <img src="{{this/imagefile}}" class="profile_image" />
+            {{username}}
+            <button onclick="sendLike()">DM</button>
+            <!--TODO: implement backend for button-->
+        </div>
+        <h3>{{this/caption}}</h3>
+        {{/each}}
+    </div>
 
-</div>
+    <div class="column right">
+        <h3> Feed </h3>
+        {{#each chatFeed}}
+        <div class="div1" style="background-color:black;color:white;padding:20px;">
+            <p> {{this/username}} </p>
+            <p> {{this/comment}} </p>
+            <p> Likes: {{this/likes}} </p>
+            <button onclick="sendMessage()">Like</button>
+            <!--TODO: implement backend for button-->
+        </div>
+        <br>
+        {{/each}}
+    </div>
 
+    <form action="/comment" id="comment-form" method="post">
+        <label for="form-comment">Comment: </label>
+        <input id="form-comment" type="text" name="comment">
+        <input type="submit" value="Submit">
+    </form>
 
-<script>
-    // Establish a WebSocket connection with the server
-const socket = new WebSocket('ws://' + window.location.host + '/websocket');
+    <script>
+        // Establish a WebSocket connection with the server
+        const socket = new WebSocket('ws://' + window.location.host + '/websocket');
 
-// Call the addMessage function whenever data is received from the server over the WebSocket
-socket.onmessage = parseMessage;
+        // Call the addMessage function whenever data is received from the server over the WebSocket
+        socket.onmessage = parseMessage;
 
-function parseMessage(message) {
-    console.log(message);
-}
+        function parseMessage(message) {
+            console.log(message);
+        }
 
-</script>
+    </script>
 
 </body>
+
 </html>

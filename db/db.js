@@ -35,19 +35,14 @@ con.connect(function (err) {
         console.log("Created chatfeed table successfully");
     })
 
-    con.query("CREATE TABLE IF NOT EXISTS users (id int NOT NULL AUTO_INCREMENT ,username varchar(255), password varchar(255), token varchar(255), PRIMARY KEY (id))", function (err, result) {
+    con.query("CREATE TABLE IF NOT EXISTS users (id int NOT NULL AUTO_INCREMENT ,username varchar(255), password varchar(255), token varchar(255), imagefile varchar(255), PRIMARY KEY (id))", function (err, result) {
         if (err) throw err;
         console.log("Created users table successfully");
     })
 })
-
-
 //--------------CONTENT FEED---------------
 
-function addToChat(dataobj) {
-    var obj = JSON.parse(dataobj);
-    var username = obj.username;
-    var msg = obj.comment;
+function addToChat(username, msg) {
 
     con.query(`INSERT INTO chatfeed (username, comment, likes) VALUES ('${username}', '${msg}', 0)`, function (err, result) {
         if (err) {
@@ -59,7 +54,7 @@ function addToChat(dataobj) {
 
 function getAllChatMsg() {
     return new Promise((resolve, reject) => {
-        con.query("SELECT username,comment FROM chatmsg ORDER BY id ASC", (err, result) => {
+        con.query("SELECT username,comment,likes FROM chatfeed ORDER BY id ASC", (err, result) => {
             if (err) {
                 reject(err);
             }
@@ -67,6 +62,8 @@ function getAllChatMsg() {
                 resolve(result);
             }
         })
+    }).catch(error => {
+        console.log(`Error adding chatmsg ${error}`);
     })
 }
 
@@ -96,7 +93,7 @@ function updateCookie(username, cookieKey){
 
 //Registers the user
 function registerUser(username, password) {
-    con.query(`INSERT INTO users (username, password) VALUES ('${username}', '${password}')`, function (err, result) {
+    con.query(`INSERT INTO users (username, password, imagefile) VALUES ('${username}', '${password}', 'image/rabbit.jpg')`, function (err, result) {
         if (err) {console.log(`Failed to register user! Error: ${err}`);
         }else {console.log("Registered user!");}
     })
@@ -136,8 +133,10 @@ async function getUserByCookie(cookie) {
     if(userRows.length != 0){
         for(let i = 0; i < userRows.length; i++){
             var rowDict = userRows[i];
-            if(bcrypt.compareSync(cookie, rowDict.token)){
-                return rowDict;
+            if(rowDict.token != null){
+                if(bcrypt.compareSync(cookie, rowDict.token)){
+                    return rowDict;
+                }
             }
         }
     }

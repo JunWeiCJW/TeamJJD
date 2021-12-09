@@ -69,13 +69,15 @@ module.exports = async function mainHandler(dataDict, routeString) {
 
             return respond(respDict);
         case '/':
-            if ("Cookie" in dataDict) {
+            if ("Cookie" in dataDict & dataDict["Cookie"] != ' ') {
                 var cookieDict = parseCookie(dataDict["Cookie"]);
                 var cookieKey = cookieDict["id"];
-                const userRow = await db.getUserByCookie(cookieKey);
-                if (userRow.length != 1) {
-                    return responses.sendRedirect('/homepage');
-                }else console.log(`No cookie authenticated`);
+                if (!(cookieKey === undefined)) {
+                    const userRow = await db.getUserByCookie(cookieKey);
+                    if (userRow.length != 0) {
+                        return responses.sendRedirect('/homepage');
+                    } else console.log(`No cookie authenticated`);
+                }
             }
             return loadLogin({}, dataDict);
         case '/loginFail':
@@ -88,7 +90,7 @@ module.exports = async function mainHandler(dataDict, routeString) {
             var msgDict = {};
             msgDict.register = "Incorrect password, please check requirements!";
             return loadLogin(msgDict, dataDict)
-        case './regSameUser':
+        case '/regSameUser':
             var msgDict = {};
             msgDict.register = "Username exists! Please login, or choose a different username";
             return loadLogin(msgDict, dataDict)
@@ -117,15 +119,22 @@ module.exports = async function mainHandler(dataDict, routeString) {
             //sendallChat(clientSock)//NEED TO CHANGE TO SEND ALL INFO
             return respond(respDict);
         case '/homepage':
-            if ("Cookie" in dataDict) {
+            if ("Cookie" in dataDict & dataDict["Cookie"] != ' ') {
                 var cookieDict = parseCookie(dataDict["Cookie"]);
                 var cookieKey = cookieDict["id"];
-                const userRow = await db.getUserByCookie(cookieKey);
-                if (userRow.length != 1) {
-                    var userDict = {};
-                    userDict.clientUsername = userRow.username;
-                    return loadHomePage(userDict, dataDict);
-                }else console.log(`No cookie authenticated`);
+                if (!(cookieKey === undefined)) {
+                    const userRow = await db.getUserByCookie(cookieKey);
+                    if (userRow.length != 0) {
+                        var additionalData = {};
+                        additionalData.clientUsername = userRow.username;
+                        additionalData.clientProfilePic = userRow.imagefile;
+                        const onlineUsers = await getOnlineUsers(userRow.username);
+                        additionalData.onlineUsers = onlineUsers;
+                        const chatFeed = await getChatFeed();
+                        additionalData.chatFeed = chatFeed;
+                        return loadHomePage(additionalData, dataDict);
+                    } else console.log(`No cookie authenticated`);
+                }
             }
             return responses.sendRedirect('/');
         default:
@@ -168,6 +177,7 @@ function respond(responseProp) {
     }
 }
 
+//Restructure to send likes to appropriate chatfeed
 async function sendallChat(clientSock) {
     var allChatMsg = await db.getAllChatMsg();
     allChatMsg.forEach(row => {
@@ -205,8 +215,14 @@ function loadLogin(msgDict, dataDict) {
     respDict["X-Content-Type-Options: "] = "nosniff";
 
     //Handle cookies here
-    if("Cookie" in dataDict){
-    }else{
+    if ("Cookie" in dataDict & dataDict["Cookie"] != ' ') {
+        var cookieDict = parseCookie(dataDict["Cookie"]);
+        var cookieKey = cookieDict["id"];
+        if(!(cookieKey === undefined)){
+            var cookieVal = randomStr.generate();
+            respDict["cookie"] = `id=${cookieVal}`;
+        }
+    } else {
         var cookieVal = randomStr.generate();
         respDict["cookie"] = `id=${cookieVal}`;
     }
@@ -250,4 +266,33 @@ function loadHomePage(msgDict, dataDict) {
     respDict["data"] = data;
 
     return respond(respDict);
+}
+
+async function getOnlineUsers(username) {
+    const userRows = await db.fetchUsers();
+    var userDicts = [];//List of dictionaries
+    for (let i = 0; i < userRows.length; i++) {
+        var user = userRows[i];
+        if (user.username != username & user.username in globData.clients) {
+            var userDict = {};//Dictonary of values of users logged on
+            userDict.username = user.username;
+            userDict.imagefile = user.imagefile;
+            userDicts.push(userDict);
+        }
+    }
+    return userDicts;
+}
+
+async function getChatFeed(){
+    const chatRows = await db.getAllChatMsg();
+    var chatDicts = [];//List of dictionaries
+    for (let i = 0; i < chatRows.length; i++) {
+        var user = chatRows[i];
+        var chatDict = {};//Dictonary of values of for chat feed
+        chatDict.username = user.username;
+        chatDict.comment = user.comment;
+        chatDict.likes = user.likes;
+        chatDicts.push(chatDict);
+    }
+    return chatDicts;
 }

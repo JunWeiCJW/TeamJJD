@@ -19,6 +19,12 @@ body {
     overflow: auto;
 }
 
+.titles {
+    text-align: center;
+    overflow-x: auto;
+    width: auto;
+}
+
 .div1 {
     width: 700px;
     height: 200px;
@@ -27,4 +33,16 @@ body {
 }
 .profile_image {
     width: 70px;
+}
+
+.column {
+    float: left;
+}
+.left {
+    width: 25%;
+    height: auto;
+}
+
+.right {
+    width: 75%;
 }

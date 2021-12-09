@@ -6,6 +6,7 @@ const globData = require('./data.js');
 const responses = require('./responses.js');
 const bcrypt = require('bcryptjs');
 const db = require('./db/db.js');
+const randomStr = require('randomstring');
 
 module.exports = async function mainHandler(request, route) {
     var parsedDict = reqToDicts(request);
@@ -13,9 +14,12 @@ module.exports = async function mainHandler(request, route) {
     var data = parsedDict[1];
 
     var cookieKey = "";
-    if ("Cookie" in headers) {
+    if ("Cookie" in headers & headers["Cookie"] != ' ') {
         var cookieDict = parseCookie(headers["Cookie"]);
         cookieKey = cookieDict["id"];
+        if(cookieKey === undefined){
+            cookieKey = randomStr.generate();
+        }
     }
 
     //Token verification
@@ -24,13 +28,13 @@ module.exports = async function mainHandler(request, route) {
     }
     switch (route) {
         case "/comment":
-            var name = data["username"];
-            var comment = data["comment"];
-            var dict = {};
-            dict.username = name;
-            dict.comment = comment;
-            globData.comments.push(dict);
-            return responses.sendRedirect('./');
+            const clientName = await db.getUserByCookie(cookieKey);
+            var regData = getAsciiData(request);
+            var regDict = parseUserForm(regData);
+            var name = clientName.username;
+            var comment = regDict["comment"];
+            await db.addToChat(name, comment)
+            return responses.sendRedirect('/homepage');
         case "/image-upload":
             var img = data["filename"];
             //Save image
@@ -208,13 +212,12 @@ async function regUser(username, password) {
     }
 }
 
-async function verifyUser(username, password, cookieKey) {
+async function verifyUser(username, password) {
 
     const user = await db.getUser(username);
     if(user.length != 1){
         //conn.write(responses.sendRedirect("./loginFail"));
         console.log("No users found! Login failed")
-        updateCookieLogin(cookieKey, "Login unSuccessful!");
         return false;
     }
     var dbPassword = user[0].password;
@@ -250,18 +253,6 @@ function verifyPassword(password) {
     }
 
     return true;
-}
-
-
-function updateCookieLogin(cookie, msg) {
-    for (let i = 0; i < globData.cookiesVisits.length; i++) {
-        var keyVal = globData.cookiesVisits[i];
-        if (keyVal.cookieId == cookie) {
-            globData.cookiesVisits[i].login = msg;
-            return;
-        }
-    }
-    return;
 }
 
 function parseCookie(cookie) {
