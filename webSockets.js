@@ -20,7 +20,7 @@ module.exports = {
     mainHandler,
     buildResponse
 }
-    function mainHandler(data){
+    function mainHandler(data, client){
     var offSet = 0;//To track amount of bytes read until payload
 
     //IGNORE FIN and stuff(first 4 bits)
@@ -32,6 +32,8 @@ module.exports = {
 
     //Is connection closing?
     if(opCode == 8){
+        var connectionKey = getKeyFromDict(client);
+        delete globData.clients[connectionKey];
         return -1;//NEED TO HANDLE THIS
     }
 
@@ -103,4 +105,12 @@ function buildResponse(dataObj){
     webSocketRes = Buffer.concat([webSocketRes, payloadBuf]);
 
     return Buffer.concat([webSocketRes, dataObjBuf]);//Append payload
+}
+
+function getKeyFromDict(clientSock){
+    for(const [key, value]of Object.entries(globData.clients)){
+        if(clientSock == value){
+            return key;
+        }
+    }
 }

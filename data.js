@@ -6,5 +6,5 @@ module.exports = {
     dataLength: 0,
     isBuffering: false,
     headerLength: 0,
-    clients: [],
+    clients: {}
 }

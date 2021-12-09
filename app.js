@@ -10,6 +10,7 @@ var server = net.createServer(conn => {
 
     conn.on('data', async function(data) {
         const clientID = conn.remoteAddress + ":" + conn.remotePort;
+        var allClients = Object.values(globData.clients);
         console.log(`Client connected. ${clientID}`);
 
         //Does it need to buffer?
@@ -23,11 +24,11 @@ var server = net.createServer(conn => {
             resetBuffer();//Reset global variables
         }
         //Is it a websocket user?
-        if(globData.clients.includes(conn)){
+        if(allClients.includes(conn)){
             console.log("Websocket user detected!");
             console.log("Parsing websocket frame!");
-            var webSocMsg = webSocketHandler.mainHandler(data);
-            globData.clients.forEach(clientSocket => clientSocket.write(webSocMsg));
+            var webSocMsg = webSocketHandler.mainHandler(data, conn);
+            if(webSocMsg != -1){allClients.forEach(clientSocket => clientSocket.write(webSocMsg));}
         }
         //Is it still buffering?
         else if(!globData.isBuffering){
@@ -50,7 +51,7 @@ var server = net.createServer(conn => {
                     var postReq = await postHandler(data,route);
                     conn.write(postReq);//Need to change I think
                 }else{
-                    var response = await getHandler(dataDict, route, conn);
+                    var response = await getHandler(dataDict, route);
                     //console.log(response);
                     conn.write(response);
                 }

@@ -11,7 +11,7 @@ const bcrypt = require('bcryptjs');
 //SHA-1 encoding
 const crypto = require('crypto');
 
-module.exports = async function mainHandler(dataDict, routeString, clientSock) {
+module.exports = async function mainHandler(dataDict, routeString) {
     var route = "";
 
     //Handle special cases
@@ -68,27 +68,6 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock) {
             respDict["data"] = fileStream;
 
             return respond(respDict);
-        case '/auth':
-            if ("Cookie" in dataDict) {
-                var cookieDict = parseCookie(dataDict["Cookie"]);
-                var cookieKey = cookieDict["id"];
-                const userRows = await db.fetchUsers();
-                if (userRows.length != 0) {
-                    for (let i = 0; i < userRows.length; i++) {
-                        var rowDict = userRows[i];
-                        if (bcrypt.compareSync(cookieKey, rowDict.token)) {
-                            var dbUsername = rowDict.username;
-                            var authDict = {};
-                            authDict.username = `${dbUsername}`;
-                            return loadAuth(authDict);
-                        }
-                    }
-                }
-                console.log("No authenticated cookie!")
-            } else {
-                console.log("No cookie stored yet");
-            }
-            return responses.needLogin();
         case '/':
             if ("Cookie" in dataDict) {
                 var cookieDict = parseCookie(dataDict["Cookie"]);
@@ -104,7 +83,7 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock) {
             msgDict.login = "You failed to login, please check username and password";
             return loadLogin(msgDict, dataDict)
         case '/loginSuccess':
-            return loadHomePage({}, dataDict);
+            return responses.sendRedirect("/homepage");
         case '/registerFail':
             var msgDict = {};
             msgDict.register = "Incorrect password, please check requirements!";
@@ -123,10 +102,19 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock) {
             var webKey = dataDict["Sec-WebSocket-Key"].trim() + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
             var hashedKey = shasum.update(webKey).digest('base64');
 
-            globData.clients.push(dataDict["client"]);//Save client upgrade
+            var cookieDict = parseCookie(dataDict["Cookie"]);//We will have a cookie if we are on this route
+            var cookieKey = cookieDict["id"];
+            const userRow = await db.getUserByCookie(cookieKey);
+            var userName = userRow.username;
+
+            // globData.clients.push(dataDict["client"]);//Save client upgrade
+            var sDict = {};
+            sDict[userName] = dataDict["client"];
+            globData.clients[userName] = dataDict["client"];
+
             respDict["Sec-WebSocket-Accept: "] = hashedKey;
 
-            sendallChat(clientSock)//NEED TO CHANGE TO SEND ALL INFO
+            //sendallChat(clientSock)//NEED TO CHANGE TO SEND ALL INFO
             return respond(respDict);
         case '/homepage':
             if ("Cookie" in dataDict) {
@@ -134,10 +122,9 @@ module.exports = async function mainHandler(dataDict, routeString, clientSock) {
                 var cookieKey = cookieDict["id"];
                 const userRow = await db.getUserByCookie(cookieKey);
                 if (userRow.length != 1) {
-                    var dbUsername = userRow.username;
-                    var authDict = {};
-                    authDict.auth = `Welcome back ${dbUsername}`;
-                    return loadHomePage(authDict, dataDict);
+                    var userDict = {};
+                    userDict.clientUsername = userRow.username;
+                    return loadHomePage(userDict, dataDict);
                 }else console.log(`No cookie authenticated`);
             }
             return responses.sendRedirect('/');
@@ -230,23 +217,6 @@ function loadLogin(msgDict, dataDict) {
     const templateHTML1 = fileStream.toString();
     const templateFun1 = HandleBars.compile(templateHTML1);
     var data = templateFun1(templateDict1);
-
-    respDict["Content-Length: "] = data.length;
-    respDict["data"] = data;
-
-    return respond(respDict);
-}
-
-function loadAuth(valDict) {
-    var respDict = {};
-    respDict["Header"] = codes[200];
-    respDict["Content-Type: "] = "text/html";
-    respDict["X-Content-Type-Options: "] = "nosniff";
-
-    var fileStream = fs.readFileSync('auth.html', "utf8");
-    const templateHTML = fileStream.toString();
-    const templateFun = HandleBars.compile(templateHTML);
-    var data = templateFun(valDict);
 
     respDict["Content-Length: "] = data.length;
     respDict["data"] = data;

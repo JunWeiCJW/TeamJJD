@@ -14,9 +14,9 @@
 
 <body>
 <h1>TeamJJDDP Forum</h1>
-<form action="https://google.com"> <!--TODO: change to registration page url-->
-    <input type="submit" value="Login/Register" />
-</form>
+
+<h2>Welcome {{clientUsername}}!</h2>
+
 <form action="https://google.com"> <!--TODO: Profile Picture Submission page URL-->
     <input type="submit" value="Change Profile Picture" />
 </form>
@@ -60,6 +60,18 @@
 </div>
 
 
+<script>
+    // Establish a WebSocket connection with the server
+const socket = new WebSocket('ws://' + window.location.host + '/websocket');
+
+// Call the addMessage function whenever data is received from the server over the WebSocket
+socket.onmessage = parseMessage;
+
+function parseMessage(message) {
+    console.log(message);
+}
+
+</script>
 
 </body>
 </html>
