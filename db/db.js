@@ -29,7 +29,7 @@ con.connect(function (err) {
         console.log("Database set to cse312");
     })
 
-    con.query("CREATE TABLE IF NOT EXISTS chatfeed (id int NOT NULL AUTO_INCREMENT,username varchar(255) NOT NULL,comment varchar(255), likes int PRIMARY KEY (id))", function (err, result) {
+    con.query("CREATE TABLE IF NOT EXISTS chatfeed (id int NOT NULL AUTO_INCREMENT,username varchar(255) NOT NULL,comment varchar(255), likes int, PRIMARY KEY (id))", function (err, result) {
         if (err) throw err;
         console.log("Created chatfeed table successfully");
     })
@@ -130,7 +130,7 @@ function getUser(username) {
 }
 
 //Get user based off un-hashed cookie(each hash is different)
-function getUserByCookie(cookie) {
+async function getUserByCookie(cookie) {
     const userRows = await db.fetchUsers();
     if(userRows.length != 0){
         for(let i = 0; i < userRows.length; i++){
