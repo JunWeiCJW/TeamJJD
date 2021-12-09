@@ -14,20 +14,20 @@
     <h1 class="titles">TeamJJDDP Forum</h1>
 
     <h2 class="titles" id="curUser" value={{clientUsername}}>Welcome {{clientUsername}}!</h2>
-    <div>
-        <p>{{clientUsername}}:</p>
-        <img src={{clientProfilePic}} class="profile_image"></img>
-        <form action="/image-upload" id="image-form" method="post" enctype="multipart/form-data">
-            <h3>Change profile Picture:</h3>
-            <label for="form-file">Image: </label>
-            <input id="form-file" type="file" name="upload">
-            <input type="submit" value="Submit">
-        </form>
 
-    </div>
-
-    <!-- Side navigation -->
     <div class="column left">
+        <div>
+            <p>{{clientUsername}}:</p>
+            <img src={{clientProfilePic}} class="profile_image"></img>
+            <form action="/image-upload" id="image-form" method="post" enctype="multipart/form-data">
+                <h3>Change profile Picture:</h3>
+                <label for="form-file">Image: </label>
+                <input id="form-file" type="file" name="upload">
+                <input type="submit" value="Submit">
+            </form>
+    
+        </div>
+
         <h4>Users currently logged in:</h3>
             {{#each onlineUsers}}
             <div>
@@ -52,13 +52,14 @@
         </div>
         <br>
         {{/each}}
+        <form action="/comment" id="comment-form" method="post">
+            <label for="form-comment">Comment: </label>
+            <input id="form-comment" type="text" name="comment">
+            <input type="submit" value="Submit">
+        </form>
     </div>
 
-    <form action="/comment" id="comment-form" method="post">
-        <label for="form-comment">Comment: </label>
-        <input id="form-comment" type="text" name="comment">
-        <input type="submit" value="Submit">
-    </form>
+
 
     <script>
         // Establish a WebSocket connection with the server
