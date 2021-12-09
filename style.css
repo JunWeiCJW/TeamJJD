@@ -18,3 +18,13 @@ body {
     background-color: #9fb0cc;
     overflow: auto;
 }
+
+.div1 {
+    width: 700px;
+    height: 200px;
+    border: 1px red;
+    box-sizing: border-box;
+}
+.profile_image {
+    width: 70px;
+}
