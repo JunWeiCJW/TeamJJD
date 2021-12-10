@@ -15,21 +15,6 @@ function verifyToken(tokenStr){
     else return false;
 }
 
-//Check if a user is currently logged in
-async function checkUserLoggedIn(cookieKey){
-    const userRows = await db.fetchUsers();
-    if(userRows.length != 0){
-        for(let i = 0; i < userRows.length; i++){
-            var rowDict = userRows[i];
-            if(bcrypt.compareSync(cookieKey, rowDict.token)){
-                return true;
-            }
-        }
-    }else{
-        return false;
-    }
-}
-
 module.exports = {
     escapeHtml,
     verifyToken

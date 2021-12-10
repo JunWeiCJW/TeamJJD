@@ -7,6 +7,7 @@ const randomStr = require('randomstring');
 const db = require('./db/db.js');
 const webSock = require('./webSockets.js');
 const bcrypt = require('bcryptjs');
+const sec = require('./secuirity.js');
 
 //SHA-1 encoding
 const crypto = require('crypto');
@@ -126,7 +127,7 @@ module.exports = async function mainHandler(dataDict, routeString) {
                     const userRow = await db.getUserByCookie(cookieKey);
                     if (userRow.length != 0) {
                         var additionalData = {};
-                        additionalData.clientUsername = userRow.username;
+                        additionalData.clientUsername = sec.escapeHtml(userRow.username);
                         additionalData.clientProfilePic = userRow.imagefile;
                         const onlineUsers = await getOnlineUsers(userRow.username);
                         additionalData.onlineUsers = onlineUsers;
@@ -275,7 +276,7 @@ async function getOnlineUsers(username) {
         var user = userRows[i];
         if (user.username != username & user.username in globData.clients) {
             var userDict = {};//Dictonary of values of users logged on
-            userDict.username = user.username;
+            userDict.username = sec.escapeHtml(user.username);
             userDict.imagefile = user.imagefile;
             userDicts.push(userDict);
         }
@@ -289,8 +290,8 @@ async function getChatFeed(){
     for (let i = 0; i < chatRows.length; i++) {
         var user = chatRows[i];
         var chatDict = {};//Dictonary of values of for chat feed
-        chatDict.username = user.username;
-        chatDict.comment = user.comment;
+        chatDict.username = sec.escapeHtml(user.username);
+        chatDict.comment = sec.escapeHtml(user.comment);
         chatDict.likes = user.likes;
         chatDict.id = user.id;
         chatDicts.push(chatDict);

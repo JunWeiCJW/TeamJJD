@@ -146,6 +146,7 @@ async function handleLikeMsg(dataDict){
 async function handleDM(dataDict){
     var sender = dataDict["sender"];
     var username = dataDict["reciever"];
+    dataDict["message"] = sec.escapeHtml(dataDict["message"]);
 
     var clientSocketToSend = globData.clients[username];
     dataDict.sender = sender;
