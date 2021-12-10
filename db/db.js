@@ -20,7 +20,6 @@ con.connect(function (err) {
     if (err) throw err;
     console.log("Connected to the database!");
 
-
     con.query("CREATE DATABASE IF NOT EXISTS cse312");
     console.log("Database created");
 
@@ -44,7 +43,7 @@ con.connect(function (err) {
 
 function addToChat(username, msg) {
 
-    con.query(`INSERT INTO chatfeed (username, comment, likes) VALUES ('${username}', '${msg}', 0)`, function (err, result) {
+    con.query(`INSERT INTO chatfeed (username, comment, likes) VALUES (?, ?, 0)`,[username, msg], function (err, result) {
         if (err) {
             console.log(`FAILED TO UPLOAD MSG TO DB, OBJECT ${dataobj}`);
         };
@@ -73,8 +72,8 @@ function getAllChatMsg() {
 //Updates the cookie at that username with new hashed cookie
 function updateCookie(username, cookieKey){
     return new Promise((resolve, reject) => {
-        var queryString = `UPDATE users SET token = '${cookieKey}' WHERE username = '${username}'`;
-        con.query(queryString, (err, result) => {
+        var queryString = `UPDATE users SET token = ? WHERE username = ?`;
+        con.query(queryString,[cookieKey, username], (err, result) => {
             if(err){
                 reject(err);
             }
@@ -93,7 +92,7 @@ function updateCookie(username, cookieKey){
 
 //Registers the user
 function registerUser(username, password) {
-    con.query(`INSERT INTO users (username, password, imagefile) VALUES ('${username}', '${password}', 'image/rabbit.jpg')`, function (err, result) {
+    con.query(`INSERT INTO users (username, password, imagefile) VALUES (?, ?, 'image/rabbit.jpg')`,[username, password], function (err, result) {
         if (err) {console.log(`Failed to register user! Error: ${err}`);
         }else {console.log("Registered user!");}
     })
@@ -116,8 +115,8 @@ function fetchUsers(){
 //Get user based on username
 function getUser(username) {
     return new Promise((resolve, reject) => {
-        var queryString = `SELECT username,password FROM users WHERE username='${username}'`;
-        con.query(queryString, (err, result) => {
+        var queryString = `SELECT username,password FROM users WHERE username=?`;
+        con.query(queryString,[username], (err, result) => {
             if(err) reject(err);
             else resolve(result);
         })
@@ -168,8 +167,8 @@ async function updateUserProfilePic(imgPath, cookie) {
 
 function updateProfilePicDB(imgPath, username){
     return new Promise((resolve, reject) => {
-        var queryString = `UPDATE users SET imagefile = '${imgPath}' WHERE username = '${username}'`;
-        con.query(queryString, (err, result) => {
+        var queryString = `UPDATE users SET imagefile = ? WHERE username = ?`;
+        con.query(queryString,[imgPath, username], (err, result) => {
             if(err){
                 reject(err);
                 console.log(err);
@@ -191,8 +190,8 @@ function updateProfilePicDB(imgPath, username){
 
 function getLikesByID(id){
     return new Promise((resolve, reject) => {
-        var queryString = `SELECT likes FROM chatfeed WHERE id='${id}'`;
-        con.query(queryString, (err, result) => {
+        var queryString = `SELECT likes FROM chatfeed WHERE id=?`;
+        con.query(queryString,[id], (err, result) => {
             if(err) reject(err);
             else resolve(result);
         })
@@ -203,7 +202,7 @@ function getLikesByID(id){
 }
 
 function updateLikesByID(id, likeCount){
-    con.query(`UPDATE chatfeed SET likes='${likeCount}' WHERE id='${id}'`, function (err, result) {
+    con.query(`UPDATE chatfeed SET likes=? WHERE id=?`,[likeCount, id], function (err, result) {
         if (err) {console.log(`Failed to update like! Error: ${err}`);
         }else {console.log("Like updated!");}
     })

@@ -258,7 +258,6 @@ function verifyPassword(password) {
     if (!numberRegex.test(password)) {
         return false;
     }
-
     return true;
 }
 
