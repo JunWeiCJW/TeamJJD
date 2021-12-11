@@ -3,16 +3,16 @@ const bcrypt = require('bcryptjs');
 
 var con = mysql.createConnection({
     //--DOCKER COMPOSE CONFIG--
-    // host:"mysql",
-    // port: "3306",
-    // user: "root",
-    // password: "codingisfun"
+    host:"mysql",
+    port: "3306",
+    user: "root",
+    password: "codingisfun"
     //--DOCKER COMPOSE CONFIG--
 
     //--Local Host Config--
-    host: "localhost",
-    user: "root",
-    password: "codingisfun"
+    // host: "localhost",
+    // user: "root",
+    // password: "codingisfun"
     //--Local Host Config--
 });
 
