@@ -73,7 +73,7 @@ module.exports = {
     console.log("Done parsing websocket frame! Starting to send...")
 
     var payloadStr = payloadBuf.toString();
-    var dataObj = sec.escapeHtml(payloadStr);
+    var dataObj = payloadStr;
     var dataDict = JSON.parse(dataObj);
 
     if("chatID" in dataDict){

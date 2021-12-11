@@ -97,7 +97,7 @@ function parseUserForm(dataString) {
     var returnDict = {};
     dataList.forEach(value => {
         var [key, val] = value.split("=");
-        returnDict[key] = val;
+        returnDict[decodeURIComponent(key)] = decodeURIComponent(val);
     })
     return returnDict;
 }

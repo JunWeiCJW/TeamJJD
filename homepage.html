@@ -13,11 +13,11 @@
 <body>
     <h1 class="titles">TeamJJDDP Forum</h1>
 
-    <h2 class="titles" >Welcome {{clientUsername}}!</h2>
+    <h2 class="titles" >Welcome {{{clientUsername}}}!</h2>
 
     <div class="column left">
         <div>
-            <p id="curUser">{{clientUsername}}:</p>
+            <p id="curUser">{{{clientUsername}}}:</p>
             <img src={{clientProfilePic}} class="profile_image"></img>
             <form action="/image-upload" id="image-form" method="post" enctype="multipart/form-data">
                 <h3>Change profile Picture:</h3>
@@ -34,8 +34,8 @@
             {{#each onlineUsers}}
             <div>
                 <img src="{{this/imagefile}}" class="profile_image" />
-                {{username}}
-                <button value="{{username}}" onclick="openDMchat(this.value)">DM</button>
+                {{{username}}}
+                <button value="{{{username}}}" onclick="openDMchat(this.value)">DM</button>
             </div>
             {{/each}}
 
@@ -55,8 +55,8 @@
         <h3> Feed </h3>
         {{#each chatFeed}}
         <div class="div1" style="background-color:black;color:white;padding:20px;">
-            <p> {{this/username}} </p>
-            <p> {{this/comment}} </p>
+            <p> {{{this/username}}} </p>
+            <p> {{{this/comment}}} </p>
             <p id="{{this/id}}"> Likes: {{this/likes}} </p>
             <button value="{{this/id}}" onclick="sendLike(this)">Like</button>
         </div>
@@ -118,17 +118,14 @@
 
         function openDMchat(userToSend){
             var chatDiv = document.getElementById("dmSendMessage");
+            localStorage.setItem("userToSend", userToSend)
             chatDiv.innerHTML = "<p id='userToSend'>" + userToSend + "</p><input id='dmInput' type='text'> <br> <button onclick='sendDM()'>Send DM </button>";
-            // console.log(userToSend);
-            // console.log(chatDiv);
-            // chatDiv.style.display = "block";
         }
 
         function sendDM(){
             var curUserTemp = document.getElementById("curUser").innerHTML;
             var curUser = curUserTemp.slice(0, curUserTemp.length-1)
-            var recieverDiv = document.getElementById("userToSend");
-            var userToSend = recieverDiv.innerHTML;
+            var userToSend = localStorage.getItem("userToSend");
             var msg = document.getElementById("dmInput").value;
             console.log(userToSend);
             console.log(msg);

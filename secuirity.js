@@ -3,9 +3,9 @@ const db = require('./db/db');
 const bcrypt = require('bcryptjs');
 
 function escapeHtml(inputToClean){
-    var resultStr = inputToClean.replace(/&/g, '&amp');;
-    resultStr = resultStr.replace(/</g, '&lt');
-    resultStr = resultStr.replace(/>/g, '&gt');
+    var resultStr = inputToClean.replace(/&/g, '&amp;');;
+    resultStr = resultStr.replace(/</g, '&lt;');
+    resultStr = resultStr.replace(/>/g, '&gt;');
     return resultStr;
 }
 
